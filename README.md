@@ -1,2 +1,2 @@
 livewebsite 
-chosun41.github.io
+https://chosun41.github.io/
