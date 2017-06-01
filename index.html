@@ -118,8 +118,9 @@ path.link {
 </table>
 
 <!--centrality stats-->    
-<table style="float: left;margin-right:20px;font-family: Arial", cellpadding="21">
-            <td> 
+<table style="float: left;margin-right:20px;font-family: Arial">
+     <tr>
+            <td style="padding: 21px"> 
                     <div id="sel_cent"> Size By:
                         <select id="myDD3">test</select>
                     </div>
@@ -132,6 +133,14 @@ path.link {
                     <div id="top5">Rank 5: </div>
                     <div id="top6">Rank 6: </div>
             </td>
+    </tr>
+    <tr>
+            <td style="padding: 7px 0px 0px 22px"> 
+                    <div id="numpoke" class="numpoke"> Top N:
+                        <input type="number" id="myNumber" value=134>
+                    </div>
+            </td>
+     </tr>
 </table>
     
 <!--script-->
@@ -350,16 +359,14 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
               .attr("width", 50)
           });*/
 
-//function to select type of pokemon and color change
-    
+//variable to keep track of type outside of change functions
  var crnttype="";
- var typechng=false;
-    
+   
+ //function to select type of pokemon and color change
  d3.select('#myDD2').on('change', function(){
         //get type selected
         var seltype = d3.select("#myDD2").node().value;
         crnttype=seltype;
-        typechng=true;
         
        //reset all circle colors to black and full opacity
         nodeEnter.each(function(d, i){
@@ -408,6 +415,7 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
      
         document.getElementById("count").innerHTML = 'Count: ' + count + ' (' + prcnt + '%)';
  });
+
     
 //function to select individual pokemon and color change  
  d3.select('#myDD').on('change', function(){
@@ -458,12 +466,20 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
             }
         })
  });
-        
+    
+//index of pokemon for number input   
+var topn=134;
+    
+//variables to keep track of current centrality measure picked outside of change functions
+var crntcent="";
+    
 //size by centrality measure   
  d3.select('#myDD3').on('change', function(){
         //get type selected
         var selcent = d3.select("#myDD3").node().value;
         crntcent=selcent;
+        // tie this to variable
+       /* console.log(document.getElementById('myDD3').value);*/
         
       //reset all circle colors to black and full opacity and reverse enlargements
 /*        nodeEnter.each(function(d, i){
@@ -479,7 +495,6 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
         })*/
 
         // sorted nodes by centrality measure
-     
         var fltrtype=json.nodes.slice().filter(function (a) {
             if (crnttype=="One Type")
                 return (a.type2 == "None");
@@ -490,7 +505,13 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
             else
                 return (a.type1 == crnttype||a.type2==crnttype);
         });
+        
+        //length of current type filter
+        var crntfltrlen=fltrtype.length;
+        // top n value
+        var topn=document.getElementById("myNumber").value;
      
+        // filtered list
         var descusage=fltrtype.slice().sort(function(a,b) {return d3.descending(a.usage, b.usage);})
         var ascusage=fltrtype.slice().sort(function(a,b) {return d3.ascending(a.usage, b.usage);})
         var descind=fltrtype.slice().sort(function(a,b) {return d3.descending(a.din, b.din);})
@@ -501,34 +522,43 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
         var ascpgr=fltrtype.slice().sort(function(a,b) {return d3.ascending(a.pgr, b.pgr);})
         var descvblty=fltrtype.slice().sort(function(a,b) {return d3.descending(a.gxe95, b.gxe95);})
         var ascvblty=fltrtype.slice().sort(function(a,b) {return d3.ascending(a.gxe95, b.gxe95);})
+        
+        //further filtering according to top n
+        //if topn is <=than length of current filter and >= length of type with shortest number of pokemon
+        //then return a shortened array
+        if(topn<=crntfltrlen && topn>=3){
+            descusage=descusage.slice(0,topn);
+            ascusage=ascusage.slice(0,topn);
+            descind=descind.slice(0,topn);
+            ascind=ascind.slice(0,topn);
+            descbt=descbt.slice(0,topn);
+            ascbt=ascbt.slice(0,topn);
+            descpgr=descpgr.slice(0,topn);
+            ascpgr=ascpgr.slice(0,topn);
+            descvblty=descvblty.slice(0,topn);
+            ascvblty=ascvblty.slice(0,topn);
+        }
      
         // for each node change the size first identifying pokemon from the node text and then conditional for each
         //centrality measure
-        nodeEnter.each(function(d, i){
+/*        nodeEnter.each(function(d, i){
             var thisnode=d3.select(this);
             var nodetxt = thisnode.text();
-            var tokens =nodetxt.split(" ");
-            var varname=fltrtype.filter(function (a) {
+            var tokens =nodetxt.split(" ");*/
+/*            var varname=fltrtype.filter(function (a) {
             return (a.id == tokens[2]);
             })[0];
             if(varname==undefined){
                 return;
-            }
+            }*/
+            
+            //only apply the effects to the pokemon indicated by top n
+            
             // size scaling is 50 + (200-50) and also (value-min)/(max-min) of centrality measure
             // x y resize is half of that height and width value
             if(selcent=='Usage'){
-                var min=ascusage[0].usage;
-                var max=descusage[0].usage;
-                var diffmaxmin=max-min;
-                var diffvarmin=varname.usage-min;
-                var hw=50 + (200-50)*diffvarmin/diffmaxmin;
-                var xy=-hw/2;
-                thisnode.select('image')
-                .transition()
-                .attr("x", function(d) { return xy;})
-                .attr("y", function(d) { return xy;})
-                .attr("height", hw)
-                .attr("width", hw);
+                
+                // change text according to filter
                 document.getElementById("maxcent").innerHTML = 'Max: ' + (descusage[0].usage*100).toFixed(2) + "% ("  + descusage[0].id + ")";
                 document.getElementById("mincent").innerHTML = 'Min: ' + (ascusage[0].usage*100).toFixed(2) + "% ("  + ascusage[0].id + ")";
                 document.getElementById("top1").innerHTML = 'Rank 1: ' + descusage[0].id + " ("  + (descusage[0].usage*100).toFixed(2) + "%)";
@@ -546,20 +576,39 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
                     document.getElementById("top6").innerHTML = 'Rank 6: ' + descusage[5].id + " ("  + (descusage[6].usage*100).toFixed(2) + "%)";
                 else
                    document.getElementById("top6").innerHTML = 'Rank 6: '; 
+                
+                //relative sizing parameters
+                var min=ascusage[0].usage;
+                var max=descusage[0].usage;
+                var diffmaxmin=max-min;
+
+                nodeEnter.each(function(d, i){
+                    var thisnode=d3.select(this);
+                    var nodetxt = thisnode.text();
+                    var tokens =nodetxt.split(" ");
+                    var varname=descusage.filter(function (a) {
+                        return (a.id == tokens[2]);
+                    })[0];
+                    if(varname==undefined){
+                        thisnode.transition().style("opacity", 0.05);
+                    }
+                    else{
+                        //rest of sizing parameters
+                        var diffvarmin=varname.usage-min;
+                        var hw=50 + (200-50)*diffvarmin/diffmaxmin;
+                        var xy=-hw/2;
+                        thisnode.transition().style("opacity", 1);
+                        thisnode.select('image')
+                        .transition()
+                        .attr("x", function(d) { return xy;})
+                        .attr("y", function(d) { return xy;})
+                        .attr("height", hw)
+                        .attr("width", hw);
+                    }
+                })
             }
            else if(selcent=='In Degree'){
-                var min=ascind[0].din;
-                var max=descind[0].din;
-                var diffmaxmin=max-min;
-                var diffvarmin=varname.din-min;
-                var hw=50 + (200-50)*diffvarmin/diffmaxmin;
-                var xy=-hw/2;
-                thisnode.select('image')
-                .transition()
-                .attr("x", function(d) { return xy;})
-                .attr("y", function(d) { return xy;})
-                .attr("height", hw)
-                .attr("width", hw)
+                    
                 document.getElementById("maxcent").innerHTML = 'Max: ' + descind[0].din + " ("  + descind[0].id + ")";
                 document.getElementById("mincent").innerHTML = 'Min: ' + ascind[0].din + " ("  + ascind[0].id + ")";
                 document.getElementById("top1").innerHTML = 'Rank 1: ' + descind[0].id + " ("  + descind[0].din + ")";
@@ -577,20 +626,38 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
                     document.getElementById("top6").innerHTML = 'Rank 6: ' + descind[5].id + " ("  + descind[6].din + ")";
                 else
                     document.getElementById("top6").innerHTML = 'Rank 6: ';
+                    
+                var min=ascind[0].din;
+                var max=descind[0].din;
+                var diffmaxmin=max-min;
+                    
+                nodeEnter.each(function(d, i){
+                    var thisnode=d3.select(this);
+                    var nodetxt = thisnode.text();
+                    var tokens =nodetxt.split(" ");
+                    var varname=descind.filter(function (a) {
+                        return (a.id == tokens[2]);
+                    })[0];
+                    if(varname==undefined){
+                        thisnode.transition().style("opacity", 0.05);
+                    }
+                    else{
+                        //rest of sizing parameters
+                        var diffvarmin=varname.din-min;
+                        var hw=50 + (200-50)*diffvarmin/diffmaxmin;
+                        var xy=-hw/2;
+                        thisnode.transition().style("opacity", 1);
+                        thisnode.select('image')
+                        .transition()
+                        .attr("x", function(d) { return xy;})
+                        .attr("y", function(d) { return xy;})
+                        .attr("height", hw)
+                        .attr("width", hw)
+                    }  
+                })
             }
              else if(selcent=='Between Centrality'){
-                var min=ascbt[0].bt;
-                var max=descbt[0].bt;
-                var diffmaxmin=max-min;
-                var diffvarmin=varname.bt-min;
-                var hw=50 + (200-50)*diffvarmin/diffmaxmin;
-                var xy=-hw/2;
-                thisnode.select('image')
-                .transition()
-                .attr("x", function(d) { return xy;})
-                .attr("y", function(d) { return xy;})
-                .attr("height", hw)
-                .attr("width", hw)
+                     
                 document.getElementById("maxcent").innerHTML = 'Max: ' + descbt[0].bt + " ("  + descbt[0].id + ")";
                 document.getElementById("mincent").innerHTML = 'Min: ' + ascbt[0].bt + " ("  + ascbt[0].id + ")";
                 document.getElementById("top1").innerHTML = 'Rank 1: ' + descbt[0].id + " ("  + descbt[0].bt + ")";
@@ -608,20 +675,38 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
                     document.getElementById("top6").innerHTML = 'Rank 6: ' + descbt[5].id + " ("  + descbt[6].bt + ")";
                 else
                     document.getElementById("top6").innerHTML = 'Rank 6: ';
+                        
+                var min=ascbt[0].bt;
+                var max=descbt[0].bt;
+                var diffmaxmin=max-min;
+                     
+                nodeEnter.each(function(d, i){
+                    var thisnode=d3.select(this);
+                    var nodetxt = thisnode.text();
+                    var tokens =nodetxt.split(" ");
+                    var varname=descbt.filter(function (a) {
+                        return (a.id == tokens[2]);
+                    })[0];
+                    if(varname==undefined){
+                        thisnode.transition().style("opacity", 0.05);
+                    }
+                    else{
+                        //rest of sizing parameters
+                        var diffvarmin=varname.bt-min;
+                        var hw=50 + (200-50)*diffvarmin/diffmaxmin;
+                        var xy=-hw/2;
+                        thisnode.transition().style("opacity", 1);
+                        thisnode.select('image')
+                        .transition()
+                        .attr("x", function(d) { return xy;})
+                        .attr("y", function(d) { return xy;})
+                        .attr("height", hw)
+                        .attr("width", hw)
+                    }
+                })
             }
             else if(selcent=='Page Rank Prob.'){
-                var min=ascpgr[0].pgr;
-                var max=descpgr[0].pgr;
-                var diffmaxmin=max-min;
-                var diffvarmin=varname.pgr-min;
-                var hw=50 + (200-50)*diffvarmin/diffmaxmin;
-                var xy=-hw/2;
-                thisnode.select('image')
-                .transition()
-                .attr("x", function(d) { return xy;})
-                .attr("y", function(d) { return xy;})
-                .attr("height", hw)
-                .attr("width", hw);     
+                    
                 document.getElementById("maxcent").innerHTML = 'Max: ' + (descpgr[0].pgr*100).toFixed(2) + "% ("  + descpgr[0].id + ")";
                 document.getElementById("mincent").innerHTML = 'Min: ' + (ascpgr[0].pgr*100).toFixed(2) + "% ("  + ascpgr[0].id + ")";
                 document.getElementById("top1").innerHTML = 'Rank 1: ' + descpgr[0].id + " ("  + (descpgr[0].pgr*100).toFixed(2) + "%)";
@@ -639,20 +724,38 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
                     document.getElementById("top6").innerHTML = 'Rank 6: ' + descpgr[5].id + " ("  + (descpgr[6].pgr*100).toFixed(2) + "%)";
                 else
                     document.getElementById("top6").innerHTML = 'Rank 6: ';
+                    
+                var min=ascpgr[0].pgr;
+                var max=descpgr[0].pgr;
+                var diffmaxmin=max-min;
+                    
+                nodeEnter.each(function(d, i){
+                    var thisnode=d3.select(this);
+                    var nodetxt = thisnode.text();
+                    var tokens =nodetxt.split(" ");
+                    var varname=descpgr.filter(function (a) {
+                        return (a.id == tokens[2]);
+                    })[0];
+                    if(varname==undefined){
+                        thisnode.transition().style("opacity", 0.05);
+                    }
+                    else{
+                        //rest of sizing parameters
+                        var diffvarmin=varname.pgr-min;
+                        var hw=50 + (200-50)*diffvarmin/diffmaxmin;
+                        var xy=-hw/2;
+                        thisnode.transition().style("opacity", 1);
+                        thisnode.select('image')
+                        .transition()
+                        .attr("x", function(d) { return xy;})
+                        .attr("y", function(d) { return xy;})
+                        .attr("height", hw)
+                        .attr("width", hw)
+                    }
+                })  
             }
             else if(selcent=='Viability'){
-                var min=Math.pow(ascvblty[0].gxe95,3);
-                var max=Math.pow(descvblty[0].gxe95,3);
-                var diffmaxmin=max-min;
-                var diffvarmin=Math.pow(varname.gxe95,3)-min;
-                var hw=50 + (200-50)*diffvarmin/diffmaxmin;
-                var xy=-hw/2;
-                thisnode.select('image')
-                .transition()
-                .attr("x", function(d) { return xy;})
-                .attr("y", function(d) { return xy;})
-                .attr("height", hw)
-                .attr("width", hw)
+                    
                 document.getElementById("maxcent").innerHTML = 'Max: ' + descvblty[0].gxe95 + " ("  + descvblty[0].id + ")";
                 document.getElementById("mincent").innerHTML = 'Min: ' + ascvblty[0].gxe95 + " ("  + ascvblty[0].id + ")";
                 document.getElementById("top1").innerHTML = 'Rank 1: ' + descvblty[0].id + " ("  + descvblty[0].gxe95 + ")";
@@ -670,9 +773,37 @@ d3.json("https://gist.githubusercontent.com/chosun41/0d316db79bb3b5f91249147173a
                     document.getElementById("top6").innerHTML = 'Rank 6: ' + descvblty[5].id + " ("  + descvblty[6].gxe95 + ")";
                 else
                     document.getElementById("top6").innerHTML = 'Rank 6: ';
+                    
+                var min=Math.pow(ascvblty[0].gxe95,3);
+                var max=Math.pow(descvblty[0].gxe95,3);
+                var diffmaxmin=max-min;
+                    
+                nodeEnter.each(function(d, i){
+                    var thisnode=d3.select(this);
+                    var nodetxt = thisnode.text();
+                    var tokens =nodetxt.split(" ");
+                    var varname=descvblty.filter(function (a) {
+                        return (a.id == tokens[2]);
+                    })[0];
+                    if(varname==undefined){
+                        thisnode.transition().style("opacity", 0.05);
+                    }
+                    else{
+                        //rest of sizing parameters
+                        var diffvarmin=Math.pow(varname.gxe95,3)-min;
+                        var hw=50 + (200-50)*diffvarmin/diffmaxmin;
+                        var xy=-hw/2;
+                        thisnode.transition().style("opacity", 1);
+                        thisnode.select('image')
+                        .transition()
+                        .attr("x", function(d) { return xy;})
+                        .attr("y", function(d) { return xy;})
+                        .attr("height", hw)
+                        .attr("width", hw)
+                    }
+                }) 
             }
-        })
- });
+});
     
  d3.select('#Reset').on('click', function(){
         //reset all text to blank
