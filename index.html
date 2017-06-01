@@ -529,15 +529,15 @@ var crntcent="";
         //then return a shortened array
         if(topn<=crntfltrlen && topn>=3){
             descusage=descusage.slice(0,topn);
-            ascusage=ascusage.slice(0,topn);
+            ascusage=descusage.slice().sort(function(a,b) {return d3.ascending(a.usage, b.usage);}).slice(0,topn);
             descind=descind.slice(0,topn);
-            ascind=ascind.slice(0,topn);
+            ascind=descind.slice().sort(function(a,b) {return d3.ascending(a.din, b.din);}).slice(0,topn);
             descbt=descbt.slice(0,topn);
-            ascbt=ascbt.slice(0,topn);
+            ascbt=descbt.slice().sort(function(a,b) {return d3.ascending(a.bt, b.bt);}).slice(0,topn);
             descpgr=descpgr.slice(0,topn);
-            ascpgr=ascpgr.slice(0,topn);
+            ascpgr=descpgr.slice().sort(function(a,b) {return d3.ascending(a.pgr, b.pgr);}).slice(0,topn);
             descvblty=descvblty.slice(0,topn);
-            ascvblty=ascvblty.slice(0,topn);
+            ascvblty=descvblty.slice().sort(function(a,b) {return d3.ascending(a.gxe95, b.gxe95);}).slice(0,topn);
         }
      
         // for each node change the size first identifying pokemon from the node text and then conditional for each
